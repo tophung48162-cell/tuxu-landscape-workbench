@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方中 · 景观施工图工作台</title>
+<style>
+:root{
+  --bg:#ffffff;--side:#f7f7f5;--panel:#ffffff;--line:#e8e8e4;--ink:#1a1a1a;--sub:#9a9a94;
+  --pill:#f2f2ef;--pill2:#e9e9e5;--link:#3f6fb5;
+  --amber-bg:#fdf3e3;--amber-ink:#b25e09;
+  --shadow:0 1px 2px rgba(26,26,26,.04),0 8px 24px rgba(26,26,26,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.75 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;background:var(--bg);color:var(--ink);height:100vh;display:flex;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer}
+
+/* ===== 左侧栏（参照样本版式：浅灰底 + 白胶囊激活态 + 线条图标） ===== */
+nav{width:240px;flex:none;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px;gap:2px}
+.wm{padding:2px 10px 18px;border-bottom:1px solid var(--line);margin-bottom:12px;text-align:center}
+.wm .word{font-size:30px;font-weight:800;letter-spacing:.12em;line-height:1.2}
+.wm .wlogo{width:160px;max-width:100%;display:block;margin:0 auto 2px;mix-blend-mode:multiply}
+.wm span{font-size:11.5px;color:var(--sub);letter-spacing:.02em}
+nav button.nb{all:unset;display:flex;align-items:center;gap:12px;padding:13px 12px;border-radius:10px;font-size:16px;font-weight:500;color:#33322f;margin:1px 0;transition:background .15s;width:180px}
+nav button.nb .ic{width:20px;text-align:center;flex:none;display:flex;align-items:center;justify-content:center}
+nav button.nb .ic svg{width:19px;height:19px;display:block}
+nav button.nb:hover{background:#efefeb}
+nav button.nb.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(26,26,26,.09)}
+.grouplbl{font-size:13px;font-weight:600;color:#33322f;padding:16px 12px 6px;letter-spacing:.04em;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.grouplbl:hover{color:var(--ink)}
+.grouplbl svg{width:15px;height:15px;opacity:.55;flex:none;transition:transform .2s}
+.ngroup.closed .grouplbl svg{transform:rotate(-90deg)}
+.ngroup.closed button.nb{display:none}
+.ndiv{border-top:1px solid var(--line);margin:14px 2px 2px}
+.tagred{color:#d9382e;font-size:11px;font-weight:600;margin-left:auto}
+nav .spacer{flex:1}
+.sstats{font-size:11.5px;color:var(--sub);padding:2px 12px;line-height:1.8}
+.sstats b{color:var(--ink)}
+
+/* ===== 主区（白底） ===== */
+main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--bg)}
+.view{display:none;width:100%;max-width:1000px;margin:0 auto;padding:28px 32px}
+.view.on{display:block}
+
+/* ===== 查规范页（问答流 + 右侧相关规范 + 规范检索面板） ===== */
+#v-chat.on{display:flex;flex-direction:column;flex:1;min-height:0;max-width:none;padding:16px 28px 22px}
+.qaWrap{flex:1;min-height:0;display:flex;gap:24px;width:100%;max-width:1260px;margin:0 auto}
+.qaMain{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;align-items:center}
+#v-chat:not(.live) .qaMain{justify-content:center}
+#v-chat.tabnorm #chatBox,#v-chat.tabnorm #tryBox,#v-chat.tabnorm #upBox,#v-chat.tabnorm #relPanel{display:none}
+#v-chat.tabnorm .qaMain{justify-content:flex-start}
+#normPane{display:none;width:min(880px,100%);flex:1;min-height:0;flex-direction:column}
+#v-chat.tabnorm #normPane{display:flex}
+#v-chat.tabnorm #normList{overflow-y:auto;flex:1;min-height:0;align-content:start;padding-bottom:12px}
+
+/* 落地页组合 */
+.landing{text-align:center;padding:10px 0 20px}
+.landing h3{font-size:31px;font-weight:800;letter-spacing:.02em;animation:wipeLoop 6s ease-in-out infinite}
+@keyframes wipeLoop{
+  0%{clip-path:inset(0 100% 0 0);opacity:1}
+  35%{clip-path:inset(0 0 0 0)}
+  72%{clip-path:inset(0 0 0 0);opacity:1}
+  82%{opacity:0}
+  83%{clip-path:inset(0 100% 0 0);opacity:0}
+  92%,100%{clip-path:inset(0 100% 0 0);opacity:1}
+}
+.landing p{color:var(--sub);margin:10px 0 0;font-size:14px;animation:wipeLoop 6s ease-in-out infinite}
+
+/* 大输入卡 */
+.chatIn{width:min(880px,100%);background:var(--panel);border:1px solid var(--line);border-radius:22px;box-shadow:0 2px 14px rgba(26,26,26,.06);padding:6px 6px 12px;margin-top:22px;flex:none}
+.chatIn textarea{width:100%;border:none;outline:none;resize:none;height:88px;padding:16px 18px 6px;font:inherit;font-size:15px;background:transparent}
+.chatIn textarea::placeholder{color:#b9b9b3}
+.chatIn textarea:focus{border:none;box-shadow:none}
+.askbar{display:flex;align-items:center;gap:10px;padding:6px 12px 0;flex-wrap:wrap}
+.modeseg{display:inline-flex;background:var(--pill);border-radius:999px;padding:3px;gap:2px}
+.modeseg button{border:none;background:transparent;border-radius:999px;padding:6px 13px;font-size:13px;color:#4c4c47;transition:all .15s;white-space:nowrap}
+.modeseg button .ic{filter:grayscale(1);opacity:.7;margin-right:3px}
+.modeseg button:hover{color:var(--ink)}
+.modeseg button.on{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(26,26,26,.12)}
+.askbar .hpill{border:none;background:var(--pill);color:#4a4a45;border-radius:999px;padding:7px 14px;font-size:13px}
+.askbar .hpill:hover{background:var(--pill2)}
+.upwrap{position:relative;display:inline-flex}
+.upwrap .hpill{display:inline-flex;align-items:center;gap:4px;padding:6px 13px;font-size:13px;line-height:1.4;height:32px;box-sizing:border-box}
+.upmenu{display:none;position:absolute;top:calc(100% + 6px);left:0;width:100%;box-sizing:border-box;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(26,26,26,.12);padding:4px;z-index:50}
+.upmenu.on{display:block}
+.upmenu div{padding:9px 12px;border-radius:8px;font-size:13px;color:#3c3c37;cursor:pointer;white-space:nowrap}
+.upmenu div:hover{background:var(--pill)}
+.askbar .hint{font-size:12px;color:var(--sub)}
+.send{margin-left:auto;width:40px;height:40px;border-radius:50%;border:none;background:var(--pill);color:var(--ink);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex:none}
+.send:hover{background:var(--ink);color:#fff}
+
+/* 试试这样问 */
+#tryBox{width:min(880px,100%)}
+.tryrow{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
+.tryrow b{font-size:15px}
+.mini{border:none;background:none;color:var(--sub);font-size:12.5px;margin-left:auto}
+.mini:hover{color:var(--ink)}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.scard{background:#f6f6f3;border-radius:16px;padding:14px 16px;text-align:left;transition:background .15s}
+.scard:hover{background:#efefea}
+.scard .tag{font-size:11.5px;color:var(--sub);display:flex;align-items:center;gap:5px}
+.scard p{margin-top:5px;font-size:13.5px;line-height:1.55;color:#2c2c28}
+
+/* 问答流 */
+#chatBox{width:min(880px,100%);flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:16px;padding:14px 2px}
+#v-chat.on:not(.live) #chatBox{flex:0 0 auto;overflow:visible}
+#v-chat.live #landing,#v-chat.live #tryBox{display:none}
+#v-chat.live .chatIn{margin-top:12px}
+.uask{background:#f2f2ef;border-radius:14px;padding:10px 16px;max-width:70%;word-break:break-word;align-self:flex-end}
+.acts{display:flex;gap:14px;margin:-8px 0 4px;color:#b5b5af;font-size:12.5px;align-self:flex-start}
+.acts span{cursor:pointer;user-select:none}
+.acts span:hover{color:var(--ink)}
+.acts span.sel{color:var(--ink)}
+
+/* AI问答页左侧子栏 */
+#qaSide{width:230px;flex:none;display:none;flex-direction:column;padding:6px 6px 0;border-right:1px solid var(--line)}
+#v-chat.modeai #qaSide{display:flex}
+#v-chat.modeai #landing,#v-chat.modeai #tryBox{display:none}
+#v-chat.modeai:not(.live) .qaMain{justify-content:flex-end}
+.qsHead{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 14px}
+.qsHead b{font-size:20px;font-weight:700}
+.qsFold{border:none;background:none;color:#8a8a84;padding:4px;border-radius:6px;display:flex;cursor:pointer}
+.qsFold:hover{background:var(--pill);color:var(--ink)}
+.qsFold svg{width:18px;height:18px;display:block}
+#qaExpand{display:none;align-self:flex-start;border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px;color:#8a8a84;margin:2px 0 8px;cursor:pointer}
+#qaExpand:hover{color:var(--ink);border-color:#cfcfc8}
+#qaExpand svg{width:16px;height:16px;display:block}
+#v-chat.modeai.qasideoff #qaSide{display:none}
+#v-chat.modeai.qasideoff #qaExpand{display:block}
+.qsNew{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px;font-size:16px;font-weight:600;margin:0 4px 18px;text-align:left}
+.qsNew:hover{border-color:#cfcfc8}
+.qsLbl{font-size:12px;color:var(--sub);padding:0 10px 6px}
+.hist{padding:9px 12px;border-radius:10px;font-size:13.5px;color:#3c3c37;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist:hover{background:var(--pill)}
+.hist.on{background:var(--pill2);font-weight:600}
+.ans{max-width:100%;word-break:break-word;line-height:1.8;align-self:stretch}
+.bubble img,.ans img{display:block;max-width:100%;border-radius:12px}
+.bubble table,.ans table{border-collapse:collapse;margin:8px 0;font-size:13px}
+.bubble th,.bubble td,.ans th,.ans td{border:1px solid var(--line);padding:5px 10px;text-align:left}
+.bubble th,.ans th{background:var(--pill)}
+.bubble code,.ans code{background:rgba(0,0,0,.07);padding:1px 6px;border-radius:5px;font-size:12.5px}
+.bubble{max-width:100%;padding:12px 16px;border-radius:16px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);word-break:break-word}
+
+/* 规范检索结果卡（问答流内嵌 / 检索面板共用） */
+.kbc{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-top:8px;background:#fafaf8}
+.kbc b{font-size:13.5px}
+.kbc .hard{display:inline-block;background:var(--amber-bg);color:var(--amber-ink);border-radius:6px;padding:0 8px;font-size:12px;margin-left:6px}
+.kbc pre{white-space:pre-wrap;word-break:break-word;font:inherit;margin-top:4px;color:#3c3c37;font-size:13px}
+.kbc .src{font-size:12px;color:var(--sub);margin-top:6px;border-top:1px dashed var(--line);padding-top:5px}
+.kbnote{font-size:12.5px;color:var(--sub)}
+
+/* 右侧「相关规范」面板 */
+#relPanel{width:300px;flex:none;display:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;align-self:flex-start;max-height:100%;overflow-y:auto;box-shadow:var(--shadow)}
+#v-chat.live.rel:not(.tabnorm):not(.modeai) #relPanel{display:block}
+.relHead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.relHead b{font-size:15px}
+.relHead span{font-size:12px;color:var(--sub)}
+.relItem{border-top:1px dashed var(--line);padding:10px 0}
+.relItem:first-child{border-top:none;padding-top:4px}
+.relsrc{font-size:12px;color:var(--link)}
+.relItem b{font-size:13.5px;display:block;margin-top:2px}
+.relItem p{font-size:12.5px;color:#4c4c47;margin-top:4px;line-height:1.6}
+
+/* ===== 功能页 ===== */
+h2{font-size:21px;font-weight:700;margin-bottom:2px}
+.sub{font-size:13px;color:var(--sub);margin-bottom:18px}
+.bar{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap;align-items:center}
+input[type=text],textarea,select{padding:10px 14px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fff;color:var(--ink);outline:none;transition:border .15s,box-shadow .15s}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(0,0,0,.08)}
+input[type=text]{min-width:260px}
+button.act{padding:10px 20px;border:none;border-radius:999px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;transition:all .15s}
+button.act:hover{background:#000}
+button.ghost{background:#fff;color:#3c3c37;border:1px solid var(--line)}
+button.ghost:hover{border-color:#cfcfc8}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;transition:box-shadow .15s}
+.card:hover{box-shadow:var(--shadow)}
+.card b{font-size:14px;font-weight:600}
+.card .hard{display:inline-block;background:var(--amber-bg);color:var(--amber-ink);border-radius:6px;padding:1px 8px;font-size:12px;margin-top:6px}
+.card pre{white-space:pre-wrap;word-break:break-word;font:inherit;margin-top:6px;color:#3c3c37}
+.card .src{font-size:12px;color:var(--sub);margin-top:8px;border-top:1px dashed var(--line);padding-top:6px}
+.empty{color:var(--sub);text-align:center;padding:44px 0;background:rgba(0,0,0,.015);border:1.5px dashed var(--line);border-radius:16px}
+.form{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;display:none;box-shadow:var(--shadow)}
+.form.on{display:block}
+.form .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin:10px 0}
+.form label{font-size:12px;color:var(--sub);display:block;margin-bottom:2px}
+.form input,.form textarea{width:100%}
+dialog{border:none;border-radius:20px;padding:26px 30px;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+dialog::backdrop{background:rgba(20,20,22,.45);backdrop-filter:blur(3px)}
+dialog p{color:#4a4a45;margin:8px 0}
+dialog .btns{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.docprev{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;white-space:pre-wrap;word-break:break-word;max-height:55vh;overflow-y:auto;font-size:13px;box-shadow:var(--shadow)}
+.hint{font-size:12px;color:var(--sub);margin-top:6px}
+.upcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-top:12px;box-shadow:var(--shadow);font-size:13.5px;width:min(880px,100%)}
+#chkOut .bubble{max-width:100%}
+</style>
+</head>
+<body>
+<nav id="nav">
+  <div class="wm"><img class="wlogo" src="/logo.png" alt="方中"><span>景观施工图工作台 · 本地版 V3</span></div>
+  <button class="nb on" data-v="chat"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg></span>查规范</button>
+  <div class="ngroup">
+  <button class="nb" data-v="detail"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span>大样库</button>
+  <button class="nb" data-v="mat"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9"/><path d="M10 13h4"/></svg></span>材料库</button>
+  </div>
+  <div class="ndiv"></div>
+  <div class="ngroup"><div class="grouplbl" onclick="this.parentElement.classList.toggle('closed')">工具 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+  <button class="nb" data-v="doc"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></span>说明生成</button>
+  <button class="nb" data-v="check"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8.5 12.5l2.5 2.5 5-5"/></svg></span>图纸校对<span class="tagred">新</span></button>
+  </div>
+  <div class="ndiv"></div>
+  <div class="ngroup"><div class="grouplbl" onclick="this.parentElement.classList.toggle('closed')">项目 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div>
+  <button class="nb" onclick="newProject()"><span class="ic" style="font-weight:700">＋</span>新建项目</button>
+  <div id="projList"></div>
+  </div>
+  <div class="ndiv"></div>
+  <button class="nb" data-v="dl"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4"/><path d="M4 19h16"/></svg></span>我的下载</button>
+  <div class="spacer"></div>
+  <div class="sstats">图集条文 <b id="c1">0</b> · 大样 <b id="c2">0</b> · 材料 <b id="c3">0</b> · 模板 <b id="c4">0</b></div>
+</nav>
+<main>
+  <section class="view on" id="v-chat">
+    <div class="qaWrap">
+      <aside id="qaSide">
+        <div class="qsHead"><b>AI 规范问答</b><button class="qsFold" onclick="toggleQaSide()" title="收起侧栏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9.5 4v16"/></svg></button></div>
+        <button class="qsNew" onclick="newChat()">⊕ 新建对话</button>
+        <div class="qsLbl">历史对话</div>
+        <div id="histList"></div>
+      </aside>
+      <div class="qaMain">
+        <button id="qaExpand" onclick="toggleQaSide()" title="展开侧栏"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9.5 4v16"/></svg></button>
+        <div id="chatBox">
+          <div class="landing" id="landing">
+            <h3>景观施工图，规范、大样、说明一站查</h3>
+            <p>条文带出处 · 大样随用随录 · 说明一键生成 · 图纸校对防错</p>
+          </div>
+        </div>
+        <div id="normPane">
+          <div class="bar" style="margin-top:6px">
+            <input type="text" id="normQ" placeholder="关键词，如：台阶 踏步 透水砖 缘石" onkeydown="if(event.key==='Enter')normSearch()">
+            <button class="act" onclick="normSearch()">检索</button>
+            <button class="ghost act" onclick="toggleForm('normForm')">＋ 录入新条文</button>
+            <span class="hint" style="margin:0">本地直查图集条文库 · 不调模型 · 答案带出处</span>
+          </div>
+          <div class="form" id="normForm"><div class="grid">
+            <div><label>主题</label><input type="text" id="n_theme"></div>
+            <div><label>来源（图集/规范）</label><input type="text" id="n_src" value="15J012-1"></div>
+            <div><label>条款（页码/编号）</label><input type="text" id="n_clause"></div>
+            <div><label>硬指标（可空）</label><input type="text" id="n_hard"></div>
+          </div><label>条文内容</label><textarea id="n_text" style="width:100%;height:70px"></textarea>
+          <div style="margin-top:8px"><button class="act" onclick="normAdd()">入库</button></div></div>
+          <div class="cards" id="normList"><div class="empty">输入关键词检索，或点「检索」浏览全部</div></div>
+        </div>
+        <div id="upBox"></div>
+        <div class="chatIn">
+          <textarea id="q" placeholder="描述问题或输入规范名称、编号、关键词"></textarea>
+          <div class="askbar">
+            <div class="modeseg" id="modeseg">
+              <button class="on" data-m="mix" onclick="pickMode('mix')"><span class="ic">▦</span>综合</button>
+              <button data-m="norm" onclick="pickMode('norm')"><span class="ic">⚔</span>规范检索</button>
+              <button data-m="ai" onclick="pickMode('ai')"><span class="ic">💡</span>AI问答</button>
+            </div>
+            <div class="upwrap">
+              <button class="hpill" onclick="toggleUpMenu(event)">📎 传图纸 <span style="opacity:.55;font-size:11px">▾</span></button>
+              <div class="upmenu" id="upmenu">
+                <div onclick="pickUpload('.dwg')">📐 DWG</div>
+                <div onclick="pickUpload('.dxf')">📐 DXF</div>
+                <div onclick="pickUpload('.pdf')">📄 PDF</div>
+              </div>
+            </div>
+            <span class="hint">Enter 发送 · Shift+Enter 换行</span>
+            <button class="send" onclick="send()" title="发送">↑</button>
+          </div>
+        </div>
+        <div id="tryBox">
+          <div class="tryrow"><b>试试这样问</b><button class="mini" onclick="shuffleSamples()">↻ 换一换</button></div>
+          <div class="sgrid" id="sgrid"></div>
+        </div>
+      </div>
+      <aside id="relPanel">
+        <div class="relHead"><b>相关规范</b><span id="relCount"></span></div>
+        <div id="relList"></div>
+      </aside>
+    </div>
+    <input type="file" id="cad" accept=".pdf,.dwg,.dxf" hidden onchange="doUploadCad(this)">
+  </section>
+
+  <section class="view" id="v-detail">
+    <h2>大样库</h2><div class="sub">常用节点做法卡片 · 随用随录</div>
+    <div class="bar">
+      <input type="text" id="detQ" placeholder="搜索：台阶 景墙 水景…" onkeydown="if(event.key==='Enter')detSearch()">
+      <button class="act" onclick="detSearch()">搜索</button>
+      <button class="ghost act" onclick="toggleForm('detForm')">＋ 录入大样</button>
+    </div>
+    <div class="form" id="detForm"><div class="grid">
+      <div><label>名称</label><input type="text" id="d_name"></div>
+      <div><label>适用场景</label><input type="text" id="d_scene"></div>
+      <div><label>规范依据</label><input type="text" id="d_ref"></div>
+      <div><label>源图（PDF名+页码）</label><input type="text" id="d_src"></div>
+    </div><label>做法层次（自上而下）</label><textarea id="d_layers" style="width:100%;height:70px"></textarea>
+    <div style="margin-top:8px"><button class="act" onclick="detAdd()">入库</button></div></div>
+    <div class="cards" id="detList"><div class="empty">还没有大样卡片</div></div>
+  </section>
+
+  <section class="view" id="v-mat">
+    <h2>材料库</h2><div class="sub">对应材料表五列：名称 / 面层 / 规格 / 位置 / 图片</div>
+    <div class="bar">
+      <input type="text" id="matQ" placeholder="搜索：花岗岩 透水砖…" onkeydown="if(event.key==='Enter')matSearch()">
+      <button class="act" onclick="matSearch()">搜索</button>
+      <button class="ghost act" onclick="toggleForm('matForm')">＋ 录入材料</button>
+    </div>
+    <div class="form" id="matForm"><div class="grid">
+      <div><label>名称</label><input type="text" id="m_name"></div>
+      <div><label>面层</label><input type="text" id="m_face" placeholder="光面/火烧/荔枝…"></div>
+      <div><label>常规规格</label><input type="text" id="m_spec" placeholder="按图 / 600×300×30"></div>
+      <div><label>常用位置</label><input type="text" id="m_pos"></div>
+      <div><label>参考价（可空）</label><input type="text" id="m_price"></div>
+      <div><label>供应商（可空）</label><input type="text" id="m_sup"></div>
+    </div>
+    <div style="margin-top:8px"><button class="act" onclick="matAdd()">入库</button></div></div>
+    <div class="cards" id="matList"><div class="empty">还没有材料条目</div></div>
+  </section>
+
+  <section class="view" id="v-doc">
+    <h2>说明生成</h2><div class="sub">模板 + 参数本地填充 · 不调模型 · 秒出初稿</div>
+    <div class="bar"><select id="tplSel" onchange="loadTpl()"></select>
+      <button class="act" onclick="renderDoc()">生成初稿</button>
+      <button class="ghost act" onclick="downloadDoc()" id="dlBtn" style="display:none">下载 .md</button>
+    </div>
+    <div class="grid" id="tplForm" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-bottom:14px"></div>
+    <div class="docprev" id="docPrev">← 选模板，填参数，点「生成初稿」。本地填充，内容不外发。</div>
+  </section>
+
+  <section class="view" id="v-check">
+    <h2>图纸校对</h2><div class="sub">粘贴图纸文字（可先传PDF再粘贴文字），模型对照条文库逐条核对硬指标</div>
+    <textarea id="chkText" style="width:100%;height:180px" placeholder="把 CAD 导出的文字/PDF 内容粘贴到这里…"></textarea>
+    <div class="bar" style="margin-top:10px">
+      <button class="act" onclick="runCheck()">开始核对</button>
+      <span class="hint">粘贴含图纸/甲方信息会先弹涉密确认（Q7 红线）</span>
+    </div>
+    <div id="chkOut"></div>
+  </section>
+  <section class="view" id="v-dl">
+    <h2>我的下载</h2><div class="sub">「说明生成」页下载过的初稿会记录在这里，可重新下载</div>
+    <div class="cards" id="dlList"></div>
+  </section>
+</main>
+
+<dialog id="modal"><b>⚠️ 内容疑似涉密</b>
+<p>这条内容包含「图纸/甲方/项目」等敏感词。确认发送到云端模型吗？</p>
+<div class="btns"><button class="ghost act" onclick="closeModal(false)">取消</button><button class="act" onclick="closeModal(true)">确认发送</button></div>
+</dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+let pending=null,lastDoc='';
+const SAMPLES=[
+ ['规范检索','台阶踏步的宽度和高度，规范是怎么规定的？'],
+ ['规范检索','透水砖铺人行道的标准做法是什么？'],
+ ['规范检索','混凝土缘石常用有哪些规格？'],
+ ['规范检索','混凝土台阶的做法层次是什么？'],
+ ['规范检索','透水砖路面用于停车场怎么选做法？'],
+ ['综合','台阶宽度超过6米要做什么处理？'],
+ ['综合','大台阶及多步台阶应该参考哪本图集？'],
+ ['综合','15J012-1 图集适用于什么范围？'],
+ ['综合','人行道三种铺装做法对比一下'],
+];
+function renderSamples(){const pool=[...SAMPLES].sort(()=>Math.random()-.5).slice(0,6);
+  $('sgrid').innerHTML=pool.map(s=>`<div class="scard" onclick="askSample('${s[0]}','${s[1].replace(/'/g,"\\'")}')"><span class="tag">${s[0]==='规范检索'?'⚔':'▦'} ${s[0]}</span><p>${s[1]}</p></div>`).join('');}
+function shuffleSamples(){renderSamples()}
+function toggleQaSide(){$('v-chat').classList.toggle('qasideoff')}
+/* AI问答页：回复操作行 + 历史对话（本地存储） */
+let lastQ='';
+function attachActs(el){const a=document.createElement('div');a.className='acts';
+  a.innerHTML='<span>⧉ 复制</span><span>↻ 重新生成</span><span>👍</span><span>👎</span>';
+  a.children[0].onclick=()=>{navigator.clipboard.writeText(el.innerText);a.children[0].textContent='✓ 已复制';setTimeout(()=>a.children[0].textContent='⧉ 复制',1500)};
+  a.children[1].onclick=()=>{if(lastQ){$('q').value=lastQ;send()}};
+  a.children[2].onclick=()=>{a.children[2].classList.toggle('sel');a.children[3].classList.remove('sel')};
+  a.children[3].onclick=()=>{a.children[3].classList.toggle('sel');a.children[2].classList.remove('sel')};
+  el.insertAdjacentElement('afterend',a);}
+function saveHist(){const box=$('chatBox');if(!$('v-chat').classList.contains('live'))return;
+  const firstU=box.querySelector('.uask');if(!firstU)return;
+  const h=JSON.parse(localStorage.getItem('fz_hist')||'[]');
+  h.unshift({title:firstU.innerText.slice(0,20),html:box.innerHTML});
+  localStorage.setItem('fz_hist',JSON.stringify(h.slice(0,20)));renderHist();}
+function renderHist(){const h=JSON.parse(localStorage.getItem('fz_hist')||'[]');
+  $('histList').innerHTML=h.length?h.map((e,i)=>`<div class="hist" onclick="loadHist(${i})">${esc(e.title)}</div>`).join(''):'<div class="hist" style="color:var(--sub);cursor:default">暂无历史对话</div>';}
+function loadHist(i){const h=JSON.parse(localStorage.getItem('fz_hist')||'[]');const e=h[i];if(!e)return;
+  $('chatBox').innerHTML=e.html;$('v-chat').classList.add('live');
+  document.querySelectorAll('.hist').forEach((x,j)=>x.classList.toggle('on',j===i));}
+/* 项目 + 我的下载（本地存储） */
+function newProject(){const n=prompt('项目名称：');if(!n||!n.trim())return;
+  const p=JSON.parse(localStorage.getItem('fz_proj')||'[]');p.unshift(n.trim());
+  localStorage.setItem('fz_proj',JSON.stringify(p.slice(0,20)));renderProj();}
+function renderProj(){const p=JSON.parse(localStorage.getItem('fz_proj')||'[]');
+  $('projList').innerHTML=p.map(n=>`<div class="hist" title="${esc(n)}">📁 ${esc(n)}</div>`).join('');}
+function renderDl(){const d=JSON.parse(localStorage.getItem('fz_dl')||'[]');
+  $('dlList').innerHTML=d.length?d.map((e,i)=>`<div class="card"><b>${esc(e.name)}</b><div class="src">${esc(e.time)}</div><div style="margin-top:8px;display:flex;gap:8px"><button class="ghost act" onclick="redl(${i})">重新下载</button><button class="ghost act" onclick="delDl(${i})">删除</button></div></div>`).join(''):'<div class="empty">还没有下载记录。在「说明生成」页生成初稿后点「下载 .md」会自动记录在这里</div>';}
+function redl(i){const d=JSON.parse(localStorage.getItem('fz_dl')||'[]');const e=d[i];if(!e)return;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([e.content],{type:'text/markdown'}));a.download=e.name;a.click();}
+function delDl(i){const d=JSON.parse(localStorage.getItem('fz_dl')||'[]');d.splice(i,1);
+  localStorage.setItem('fz_dl',JSON.stringify(d));renderDl();}
+/* 模式：综合(模型+知识库) / 规范检索(本地直查，不调模型) / AI问答(纯模型对话)
+   点胶囊只选中模式（白胶囊移动）；点发送↑才执行跳转 */
+let mode='mix';
+function lightPill(){document.querySelectorAll('#modeseg button').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));}
+function syncPlaceholder(){const live=$('v-chat').classList.contains('live');
+  $('q').placeholder=live?'补充相关条件，或继续追问':(mode==='norm'?'输入关键词，点右侧 ↑ 直接检索条文库':mode==='ai'?'输入问题，点右侧 ↑ 进入 AI 问答':'描述问题或输入规范名称、编号、关键词');}
+function applyMode(m){mode=m;lightPill();
+  $('v-chat').classList.toggle('tabnorm',m==='norm');
+  $('v-chat').classList.toggle('modeai',m==='ai');
+  if(m==='norm')normSearch();else syncPlaceholder();}
+function pickMode(m){if(mode===m)return;
+  if(mode==='norm'||mode==='ai'){applyMode(m);return}
+  mode=m;lightPill();syncPlaceholder();}
+document.querySelectorAll('#nav button[data-v]').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');$('v-'+b.dataset.v).classList.add('on');
+  if(b.dataset.v==='detail')detSearch();
+  if(b.dataset.v==='mat')matSearch();if(b.dataset.v==='doc')initTpl();
+  if(b.dataset.v==='dl')renderDl();
+});
+function toggleForm(id){$(id).classList.toggle('on')}
+async function jpost(url,obj){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj||{})});return r.json()}
+async function jget(url){const r=await fetch(url);return r.json()}
+function refreshState(){jget('/api/state').then(d=>{
+  $('c1').textContent=d.libs['图集条文库'];$('c2').textContent=d.libs['大样库'];
+  $('c3').textContent=d.libs['材料价表库'];$('c4').textContent=d.libs['说明模板库'];})}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+/* 问答流 */
+function add(html,me){const wasLive=$('v-chat').classList.contains('live');
+  $('v-chat').classList.add('live');if(!wasLive)$('q').placeholder='补充相关条件，或继续追问';
+  const d=document.createElement('div');d.className=me?'uask':'ans';d.innerHTML=html;
+  $('chatBox').appendChild(d);$('chatBox').scrollTop=1e9;return d}
+function askSample(tag,t){if(tag==='规范检索'){applyMode('norm');$('normQ').value=t;normSearch();}else{applyMode('mix');$('q').value=t;send();}}
+function renderRel(q){jget('/api/kb?lib=图集条文库&q='+encodeURIComponent(q)).then(d=>{
+  if(!d.entries.length){$('v-chat').classList.remove('rel');return}
+  $('relCount').textContent=d.entries.length+' 条命中';
+  $('relList').innerHTML=d.entries.map(e=>{const t=e.条文||'';return `<div class="relItem"><div class="relsrc">${esc(e.来源||'')}${e.条款?' · '+esc(e.条款):''}</div><b>${esc(e.主题||'条目')}</b><p>${esc(t.slice(0,90))}${t.length>90?'…':''}</p></div>`}).join('');
+  $('v-chat').classList.add('rel');}).catch(()=>{})}
+async function send(confirmed=false){
+  const text=$('q').value.trim();
+  if(!text){if(mode==='norm')applyMode('norm');else if(mode==='ai')applyMode('ai');return}
+  if(mode==='norm'){$('q').value='';applyMode('norm');$('normQ').value=text;normSearch();return}
+  if(mode==='ai')applyMode('ai');
+  $('q').value='';lastQ=text;add(esc(text).replace(/\n/g,'<br>'),true);
+  const msg=mode==='mix'?'（请优先检索本地知识库中的图集条文/大样/材料后再回答，并注明出处）\n'+text:text;
+  if(mode==='mix')renderRel(text);else $('v-chat').classList.remove('rel');
+  const t=add('思考中…');const d=await jpost('/api/chat',{message:msg,confirmed});t.remove();
+  if(d.need_confirm){pending=msg;$('modal').showModal();return}
+  const el=add(d.reply_html);attachActs(el);refreshState();}
+function closeModal(ok){$('modal').close();if(ok&&pending){const t=pending;pending=null;add('（已确认发送）');
+  jpost('/api/chat',{message:t,confirmed:true}).then(d=>add(d.reply_html));}}
+async function newChat(){saveHist();await jpost('/api/new');$('v-chat').classList.remove('live','rel');
+  $('chatBox').innerHTML='<div class="landing" id="landing"><h3>景观施工图，规范、大样、说明一站查</h3><p>已开新会话（记忆保留）</p></div>';
+  applyMode(mode==='ai'?'ai':'mix');
+  document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  document.querySelector('#nav button[data-v=chat]').classList.add('on');$('v-chat').classList.add('on');}
+async function doUploadFile(f){const fd=new FormData();fd.append('file',f);
+  const live=$('v-chat').classList.contains('live')&&mode!=='norm';
+  if(live)add('📎 已上传 '+esc(f.name)+'，解析中…');else{if(mode==='norm')applyMode('mix');$('upBox').innerHTML='<div class="upcard">📎 <b>'+esc(f.name)+'</b> 解析中…</div>'}
+  const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();
+  if(!r.ok||d.detail){const msg='📎 <b>'+esc(f.name)+'</b> 解析失败<div class="hint">'+(d.detail?esc(String(d.detail)):'未知错误')+'</div>';
+    if(live)add(msg);else $('upBox').innerHTML='<div class="upcard">'+msg+'</div>';return}
+  window._upText=d.text_head||'';
+  const tail='路径：<code>'+esc(d.path)+'</code>'+(window._upText?'<br><button class="ghost act" style="margin-top:6px" onclick="sendToCheck()">📋 文字送到图纸校对</button>':'');
+  if(live)add('解析完成（'+d.chars+' 字符），'+tail);
+  else $('upBox').innerHTML='<div class="upcard">✅ <b>'+esc(f.name)+'</b> 解析完成（'+d.chars+' 字符）<div class="hint" style="margin-top:4px">已存到 '+esc(d.path)+'<br>可以点下面按钮去「图纸校对」核对，或直接输入问题让我基于它回答</div>'+(window._upText?'<button class="ghost act" style="margin-top:8px" onclick="sendToCheck()">📋 文字送到图纸校对</button>':'')+'</div>'}
+async function doUploadCad(inp){const f=inp.files[0];if(!f)return;inp.value='';
+  if(!f.name.toLowerCase().endsWith('.dwg')){doUploadFile(f);return}
+  const live=$('v-chat').classList.contains('live')&&mode!=='norm';
+  if(live)add('📐 已上传 '+esc(f.name)+'（DWG），读取中…');else{if(mode==='norm')applyMode('mix');$('upBox').innerHTML='<div class="upcard">📐 <b>'+esc(f.name)+'</b>（DWG）读取中…</div>'}
+  const fd=new FormData();fd.append('file',f);
+  const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();
+  if(!r.ok||d.detail){const msg='📐 <b>'+esc(f.name)+'</b> 读取失败<div class="hint">'+(d.detail?esc(String(d.detail)):'未知错误')+'</div>';
+    if(live)add(msg);else $('upBox').innerHTML='<div class="upcard">'+msg+'</div>';return}
+  window._dwgText=d.text||'';
+  const raw=d.text||'';
+  const undec=(raw.match(/\\M\+5[0-9A-Fa-f]{4}/g)||[]).length;
+  const total=raw.split('\n').filter(Boolean).length;
+  const fontWarn=(undec>3&&undec/total>0.3)?'<div class="hint" style="margin-top:6px;color:var(--amber-ink)">⚠ 该图使用了自定义 CAD 字体（天正/探索者类），约 '+Math.round(undec/total*100)+'% 文字为私有编码暂无法解码，已按原样保留；其余文字不受影响</div>':'';
+  const sheets=(d.sheets||[]).map(s=>esc(String(s.name))).join('、');
+  const img=d.preview?'<img src="'+d.preview+'" style="display:block;max-width:100%;border-radius:10px;margin-top:8px">':'';
+  const btn=window._dwgText?'<button class="ghost act" style="margin-top:8px" onclick="sendToCheck()">📋 文字送到图纸校对</button>':'';
+  const meta='图幅 '+(d.sheets||[]).length+' 幅'+(sheets?'：'+sheets:'')+' · 文字 '+d.chars+' 字符';
+  if(live)add('✅ <b>'+esc(f.name)+'</b>（DWG '+esc(d.version||'')+'）读取完成：'+meta+fontWarn+img+btn);
+  else $('upBox').innerHTML='<div class="upcard">✅ <b>'+esc(f.name)+'</b>（DWG '+esc(d.version||'')+'）读取完成<div class="hint" style="margin-top:4px">'+meta+'<br>已存到 '+esc(d.path)+'</div>'+fontWarn+img+btn+'</div>'}
+function sendToCheck(){const t=window._dwgText||window._upText||'';if(!t)return;
+  $('chkText').value=t;
+  document.querySelector('#nav button[data-v=check]').click();
+  setTimeout(()=>$('chkText').scrollIntoView({behavior:'smooth'}),80)}
+/* 传图纸下拉菜单 */
+function toggleUpMenu(e){e.stopPropagation();$('upmenu').classList.toggle('on')}
+function pickUpload(ext){$('upmenu').classList.remove('on');const inp=$('cad');inp.accept=ext;inp.click()}
+document.addEventListener('click',e=>{const m=$('upmenu');if(m&&m.classList.contains('on')&&!e.target.closest('.upwrap'))m.classList.remove('on')});
+$('q').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+/* 规范检索（本地直查面板） */
+async function normSearch(){const q=$('normQ').value.trim();const d=await jget('/api/kb?lib=图集条文库&q='+encodeURIComponent(q));
+  $('normList').innerHTML=d.entries.length?d.entries.map(e=>card(e)).join(''):'<div class="empty">库中未收录相关内容（不会编造，可点「录入新条文」补充）</div>';}
+async function normAdd(){const e={主题:$('n_theme').value,来源:$('n_src').value,条款:$('n_clause').value,条文:$('n_text').value,硬指标:$('n_hard').value};
+  if(!e.主题||!e.条文)return alert('主题和条文必填');
+  const d=await jpost('/api/kb/add',{lib:'图集条文库',entry:e});alert('已入库：'+d.id);['n_theme','n_clause','n_text','n_hard'].forEach(i=>$(i).value='');
+  $('normForm').classList.remove('on');normSearch();refreshState();}
+/* 大样/材料 */
+async function detSearch(){const q=$('detQ').value.trim();const d=await jget('/api/kb?lib=大样库&q='+encodeURIComponent(q));
+  $('detList').innerHTML=d.entries.length?d.entries.map(e=>card(e)).join(''):'<div class="empty">还没有大样卡片，点「录入大样」建第一张</div>';}
+async function detAdd(){const e={名称:$('d_name').value,适用场景:$('d_scene').value,做法层次:$('d_layers').value,规范依据:$('d_ref').value,源图:$('d_src').value};
+  if(!e.名称||!e.做法层次)return alert('名称和做法层次必填');
+  await jpost('/api/kb/add',{lib:'大样库',entry:e});['d_name','d_scene','d_layers','d_ref','d_src'].forEach(i=>$(i).value='');
+  $('detForm').classList.remove('on');detSearch();refreshState();}
+async function matSearch(){const q=$('matQ').value.trim();const d=await jget('/api/kb?lib=材料价表库&q='+encodeURIComponent(q));
+  $('matList').innerHTML=d.entries.length?d.entries.map(e=>card(e)).join(''):'<div class="empty">还没有材料条目，点「录入材料」建第一条</div>';}
+async function matAdd(){const e={名称:$('m_name').value,面层:$('m_face').value,常规规格:$('m_spec').value,常用位置:$('m_pos').value,参考价:$('m_price').value,供应商:$('m_sup').value};
+  if(!e.名称)return alert('名称必填');
+  await jpost('/api/kb/add',{lib:'材料价表库',entry:e});['m_name','m_face','m_spec','m_pos','m_price','m_sup'].forEach(i=>$(i).value='');
+  $('matForm').classList.remove('on');matSearch();refreshState();}
+function card(e){const show=k=>e[k]?`<pre>${esc(e[k])}</pre>`:'';
+  const hard=e.硬指标?`<span class="hard">${esc(e.硬指标)}</span>`:'';
+  const src=e.来源?`<div class="src">来源：${esc(e.来源)}${e.条款?' · '+esc(e.条款):''}</div>`:(e.规范依据?`<div class="src">依据：${esc(e.规范依据)}${e.源图?' · '+esc(e.源图):''}</div>`:'');
+  return `<div class="card"><b>${esc(e.主题||e.名称||'条目')}</b>${hard}${show('条文')}${show('做法层次')}${show('适用场景')}${show('面层')}${show('常规规格')}${show('常用位置')}${show('参考价')}${show('供应商')}${src}</div>`;}
+/* 说明生成 */
+let tplCache=[];
+async function initTpl(){const d=await jget('/api/templates');tplCache=d.templates;
+  $('tplSel').innerHTML=tplCache.map(t=>`<option>${t.name}</option>`).join('');loadTpl();}
+function loadTpl(){const t=tplCache.find(x=>x.name===$('tplSel').value);if(!t)return;
+  $('tplForm').innerHTML=t.params.map(p=>`<div><label style="font-size:12px;color:var(--sub)">${esc(p)}</label><input type="text" id="p_${esc(p)}" style="width:100%"></div>`).join('')||'<span class="hint">此模板无参数</span>';}
+async function renderDoc(){const t=$('tplSel').value;const params={};(tplCache.find(x=>x.name===t)?.params||[]).forEach(p=>params[p]=$('p_'+p)?.value||'');
+  const d=await jpost('/api/render',{template:t,params});lastDoc=d.content;
+  $('docPrev').textContent=d.content;$('dlBtn').style.display='inline-block';}
+function downloadDoc(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lastDoc],{type:'text/markdown'}));
+  const fname=$('tplSel').value.replace(/\.md$/,'-初稿.md');a.download=fname;a.click();
+  const d=JSON.parse(localStorage.getItem('fz_dl')||'[]');
+  d.unshift({name:fname,content:lastDoc,time:new Date().toLocaleString('zh-CN')});
+  localStorage.setItem('fz_dl',JSON.stringify(d.slice(0,30)));}
+/* 校对 */
+async function runCheck(){const t=$('chkText').value.trim();if(!t)return alert('先粘贴文字');
+  const msg='请对照图集条文库逐条核对我粘贴的以下图纸文字中的硬性指标（如台阶踏步尺寸、透水砖做法层次、缘石规格等）。先调用 kb_search 核实条文再核对；对每个疑点给出：原文位置 + 对应条文出处 + 问题说明 + 修改建议。最后注明「初稿核对，需人工复核」。待核对文字如下：\n\n'+t;
+  const box=$('chkOut');box.innerHTML='<div class="empty">核对中…</div>';
+  const d=await jpost('/api/chat',{message:msg});
+  if(d.need_confirm){pending=msg;$('modal').showModal();box.innerHTML='';return}
+  box.innerHTML='<div class="bubble">'+d.reply_html+'</div>';}
+renderSamples();
+renderHist();
+renderProj();
+refreshState();
+</script>
+</body>
+</html>

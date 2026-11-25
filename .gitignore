@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+logs/
+output/
+knowledge/*/entries.jsonl
+
+# vendor 二进制不入库（见 vendor/*/README.md 构建）
+vendor/gocad/dwg2png
+vendor/gocad/caddocling
+vendor/oda/ODAFileConverter.app/
